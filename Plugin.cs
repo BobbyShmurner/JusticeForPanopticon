@@ -1,47 +1,29 @@
 ﻿using BepInEx;
-
-using System.Collections;
-
-using UnityEngine;
-using UnityEngine.SceneManagement;
+using HarmonyLib;
 
 namespace JusticeForPanopticon
 {
     [BepInPlugin(PluginInfo.PLUGIN_GUID, PluginInfo.PLUGIN_NAME, PluginInfo.PLUGIN_VERSION)]
     [BepInProcess("ULTRAKILL.exe")]
     public class Plugin : BaseUnityPlugin {
+        public static Harmony harmony;
+
         void Awake() {
-            SceneManager.sceneLoaded += OnSceneLoaded;
+            harmony = new Harmony(PluginInfo.PLUGIN_GUID);
+            harmony.PatchAll();
+
             Logger.LogInfo($"Plugin {PluginInfo.PLUGIN_GUID} is loaded!");
-
-            StartCoroutine(DisabledInstakill(SceneManager.GetActiveScene()));
         }
+    }
 
-        void OnSceneLoaded(Scene scene, LoadSceneMode loadMode) {
-            StartCoroutine(DisabledInstakill(scene));
-        }
-
-        private void OnDestroy() {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-        }
-
-        IEnumerator DisabledInstakill(Scene scene) {
-            if (scene.name != "Level P-2") yield break;
-            yield return null;
-
-            bool disabledInstakill = false;
-
-            foreach (ObjectActivator activator in Resources.FindObjectsOfTypeAll<ObjectActivator>()) {
-                if (activator.gameObject.name != "DelayedInstakill") continue;
-                activator.enabled = false;
-                disabledInstakill = true;
-            }
-
-            if (disabledInstakill) {
-                Logger.LogInfo("Disabled Panopticon Instalkill!");
-            } else {
-                Logger.LogError("Failed to disabled Panopticon Instalkill!");
-            }
+    [HarmonyPatch(typeof(FleshPrison), "Start")]
+    public static class FleshPrison_Start
+    {
+        [HarmonyPostfix]
+        public static void Postfix(FleshPrison __instance)
+        {
+            if (__instance.altVersion)
+                __instance.onFirstHeal = new UltrakillEvent();
         }
     }
 }
