@@ -17,8 +17,7 @@ namespace JusticeForPanopticon
     }
 
     [HarmonyPatch(typeof(FleshPrison), "Start")]
-    public static class FleshPrison_Start
-    {
+    public static class FleshPrison_Start {
         [HarmonyPostfix]
         public static void Postfix(FleshPrison __instance)
         {
